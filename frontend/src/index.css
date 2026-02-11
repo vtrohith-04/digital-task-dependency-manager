@@ -1,0 +1,285 @@
+/* =========================
+   RESET
+========================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================
+   PREMIUM ANIMATED BACKGROUND
+========================= */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+    sans-serif;
+
+  color: #e5e7eb;
+
+  background: linear-gradient(
+    -45deg,
+    #020617,
+    #020617,
+    #020617,
+    #020617,
+    #0f172a
+  );
+  background-size: 400% 400%;
+  animation: slowGradient 60s ease infinite;
+
+  /* subtle grid overlay */
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(
+      -45deg,
+      #020617,
+      #020617,
+      #020617,
+      #020617,
+      #0f172a
+    );
+
+  background-size:
+    48px 48px,
+    48px 48px,
+    400% 400%;
+}
+
+@keyframes slowGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* =========================
+   APP WRAPPER
+========================= */
+.app-wrapper {
+  max-width: 1320px; /* ⬅️ wider layout */
+  margin: 0 auto;
+  padding: 36px 28px 72px;
+}
+
+/* =========================
+   HEADER
+========================= */
+.title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #f9fafb;
+}
+
+.subtitle {
+  margin-top: 6px;
+  font-size: 15px;
+  color: #94a3b8;
+}
+
+/* =========================
+   DASHBOARD GRID
+========================= */
+.dashboard {
+  display: grid;
+  grid-template-columns: 72% 28%; /* ⬅️ more space for tasks */
+  gap: 28px;
+  margin-top: 32px;
+}
+
+/* =========================
+   TASK COLUMN
+========================= */
+.task-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.task-column::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-column::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 6px;
+}
+
+/* =========================
+   CARD BASE STYLE (MATTE)
+========================= */
+.task-column > *,
+.insights-card {
+  background: #f9fafb;
+  color: #111827;
+
+  border-radius: 16px;
+  padding: 22px 24px; /* ⬅️ larger cards */
+
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* =========================
+   RIGHT COLUMN
+========================= */
+.insights-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: sticky;
+  top: 28px;
+}
+
+/* =========================
+   INSIGHTS HEADERS
+========================= */
+.insights-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #020617;
+  margin-bottom: 12px;
+}
+
+/* =========================
+   NEXT TASK CARD
+========================= */
+.next-task-box {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.next-task-label {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.next-task-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #020617;
+}
+
+.next-task-unlock {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #16a34a;
+}
+
+.next-task-link {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+/* =========================
+   STATUS PILLS
+========================= */
+.status-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 999px;
+}
+
+.status-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pending {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.status-blocked {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+button {
+  font-family: inherit;
+}
+
+.btn-edit {
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 9px;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  border-radius: 12px;
+  padding: 9px;
+  cursor: pointer;
+}
+
+.btn-save {
+  background: #dcfce7;
+  color: #166534;
+  border: none;
+  border-radius: 12px;
+  padding: 9px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 9px;
+  cursor: pointer;
+}
+
+/* =========================
+   INPUTS
+========================= */
+input,
+select {
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* =========================
+   LINKS
+========================= */
+a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
