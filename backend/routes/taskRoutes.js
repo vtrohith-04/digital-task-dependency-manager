@@ -1,21 +1,25 @@
 const express = require("express");
 const Task = require("../models/Task");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 /*
   🔁 Helper: Circular Dependency Detection
 */
-async function hasCircularDependency(taskId, dependencyId) {
+async function hasCircularDependency(taskId, dependencyId, userId) {
   let current = dependencyId;
 
   while (current) {
-    // If dependency points back to the same task → circular
     if (taskId && current.toString() === taskId.toString()) {
       return true;
     }
 
-    const task = await Task.findById(current);
+    const task = await Task.findOne({
+      _id: current,
+      user: userId
+    });
+
     if (!task || !task.dependency) break;
 
     current = task.dependency;
@@ -27,19 +31,23 @@ async function hasCircularDependency(taskId, dependencyId) {
 /*
   GET all tasks
 */
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const tasks = await Task.find().populate("dependency");
+    const tasks = await Task.find({
+      user: req.user.id
+    }).populate("dependency");
+
     res.json(tasks);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
 /*
-  CREATE a new task
+  CREATE task
 */
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { title, dependency } = req.body;
 
@@ -49,9 +57,13 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Circular check (mainly for safety)
     if (dependency) {
-      const circular = await hasCircularDependency(null, dependency);
+      const circular = await hasCircularDependency(
+        null,
+        dependency,
+        req.user.id
+      );
+
       if (circular) {
         return res.status(400).json({
           error: "Circular dependency detected"
@@ -61,36 +73,53 @@ router.post("/", async (req, res) => {
 
     const task = new Task({
       title,
-      dependency: dependency || null
+      dependency: dependency || null,
+      user: req.user.id
     });
 
     await task.save();
+
     const savedTask = await Task.findById(task._id).populate("dependency");
 
     res.status(201).json(savedTask);
   } catch (err) {
+    console.error(err);
     res.status(400).json({ error: err.message });
   }
 });
 
 /*
-  UPDATE task (edit title, dependency, completion)
+  UPDATE task
 */
-router.put("/:id", async (req, res) => {
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const taskId = req.params.id;
     const { title, dependency, completed } = req.body;
 
-    // Prevent self-dependency
+    const existingTask = await Task.findOne({
+      _id: taskId,
+      user: req.user.id
+    });
+
+    if (!existingTask) {
+      return res.status(404).json({
+        error: "Task not found"
+      });
+    }
+
     if (dependency && dependency === taskId) {
       return res.status(400).json({
         error: "Task cannot depend on itself"
       });
     }
 
-    // Circular dependency check
     if (dependency) {
-      const circular = await hasCircularDependency(taskId, dependency);
+      const circular = await hasCircularDependency(
+        taskId,
+        dependency,
+        req.user.id
+      );
+
       if (circular) {
         return res.status(400).json({
           error: "Circular dependency detected"
@@ -98,27 +127,43 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-    const updatedTask = await Task.findByIdAndUpdate(
-      taskId,
-      { title, dependency, completed },
-      { new: true }
-    ).populate("dependency");
+    if (title !== undefined) existingTask.title = title;
+    if (dependency !== undefined) existingTask.dependency = dependency;
+    if (completed !== undefined) existingTask.completed = completed;
+
+    await existingTask.save();
+
+    const updatedTask = await Task.findById(taskId).populate("dependency");
 
     res.json(updatedTask);
   } catch (err) {
+    console.error(err);
     res.status(400).json({ error: err.message });
   }
 });
 
 /*
-  DELETE task safely
+  DELETE task
 */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const taskId = req.params.id;
 
-    // Check if other tasks depend on this task
-    const dependentTask = await Task.findOne({ dependency: taskId });
+    const task = await Task.findOne({
+      _id: taskId,
+      user: req.user.id
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        error: "Task not found"
+      });
+    }
+
+    const dependentTask = await Task.findOne({
+      dependency: taskId,
+      user: req.user.id
+    });
 
     if (dependentTask) {
       return res.status(400).json({
@@ -127,8 +172,10 @@ router.delete("/:id", async (req, res) => {
     }
 
     await Task.findByIdAndDelete(taskId);
+
     res.json({ message: "Task deleted successfully" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });

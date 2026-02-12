@@ -60,9 +60,11 @@ function TaskCard({ task, tasks, onToggle, onDelete, onEdit }) {
   }
 
   async function handleSave() {
+    const finalDependency = dependency === "" ? null : dependency;
+
     await onEdit(task._id, {
-      title,
-      dependency: dependency || null
+      title: title.trim(),
+      dependency: finalDependency
     });
 
     setIsEditing(false);
@@ -81,7 +83,7 @@ function TaskCard({ task, tasks, onToggle, onDelete, onEdit }) {
         gap: "16px"
       }}
     >
-      {/* LEFT */}
+      {/* LEFT SIDE */}
       <div style={{ flex: 1 }}>
         {isEditing ? (
           <input
@@ -167,28 +169,6 @@ function TaskCard({ task, tasks, onToggle, onDelete, onEdit }) {
           </div>
         )}
 
-        {isEditing && (
-          <select
-            value={dependency}
-            onChange={e => setDependency(e.target.value)}
-            style={{
-              marginTop: "10px",
-              padding: "8px",
-              borderRadius: "6px",
-              border: "1px solid #d1d5db"
-            }}
-          >
-            <option value="">No Dependency</option>
-            {tasks
-              .filter(t => t._id !== task._id)
-              .map(t => (
-                <option key={t._id} value={t._id}>
-                  {t.title}
-                </option>
-              ))}
-          </select>
-        )}
-
         <div style={{ marginTop: "12px" }}>
           <label style={{ fontSize: "14px" }}>
             <input
@@ -202,7 +182,7 @@ function TaskCard({ task, tasks, onToggle, onDelete, onEdit }) {
         </div>
       </div>
 
-      {/* RIGHT */}
+      {/* RIGHT SIDE */}
       <div
         style={{
           width: "140px",
@@ -239,19 +219,40 @@ function TaskCard({ task, tasks, onToggle, onDelete, onEdit }) {
         </button>
 
         {isEditing && (
-          <button
-            onClick={handleSave}
-            style={{
-              padding: "8px",
-              borderRadius: "8px",
-              background: "#DCFCE7",
-              border: "none",
-              color: "#166534",
-              cursor: "pointer"
-            }}
-          >
-            Save
-          </button>
+          <>
+            <select
+              value={dependency}
+              onChange={e => setDependency(e.target.value)}
+              style={{
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #d1d5db"
+              }}
+            >
+              <option value="">No Dependency</option>
+              {tasks
+                .filter(t => t._id !== task._id)
+                .map(t => (
+                  <option key={t._id} value={t._id}>
+                    {t.title}
+                  </option>
+                ))}
+            </select>
+
+            <button
+              onClick={handleSave}
+              style={{
+                padding: "8px",
+                borderRadius: "8px",
+                background: "#DCFCE7",
+                border: "none",
+                color: "#166534",
+                cursor: "pointer"
+              }}
+            >
+              Save
+            </button>
+          </>
         )}
 
         <button

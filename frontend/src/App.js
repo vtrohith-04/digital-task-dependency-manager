@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskList from "./components/TaskList";
 import DonutChart from "./components/DonutChart";
+import AuthPage from "./pages/AuthPage";
 import "./index.css";
 
 /* ---------- Small helper for stats ---------- */
@@ -23,54 +24,138 @@ function StatRow({ label, count }) {
 
 function App() {
   const [tasks, setTasks] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
+
+  /* ---------- Always get fresh token ---------- */
+  function getToken() {
+    return localStorage.getItem("token");
+  }
 
   /* ---------- Fetch tasks ---------- */
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (isAuthenticated) {
+      fetchTasks();
+    }
+  }, [isAuthenticated]);
 
   async function fetchTasks() {
-    const res = await fetch("http://localhost:5000/tasks");
-    const data = await res.json();
-    setTasks(data);
+    try {
+      const res = await fetch("http://localhost:5000/api/tasks", {
+        headers: {
+          Authorization: `Bearer ${getToken()}`
+        }
+      });
+
+      if (!res.ok) {
+        handleLogout();
+        return;
+      }
+
+      const data = await res.json();
+      setTasks(data);
+    } catch (err) {
+      console.error("Error fetching tasks:", err);
+    }
   }
 
   /* ---------- Add task ---------- */
   async function addTask(title, dependency) {
-    await fetch("http://localhost:5000/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, dependency })
-    });
-    fetchTasks();
+    try {
+      const res = await fetch("http://localhost:5000/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`
+        },
+        body: JSON.stringify({ title, dependency })
+      });
+
+      if (res.ok) {
+        fetchTasks();
+      }
+    } catch (err) {
+      console.error("Error adding task:", err);
+    }
   }
 
   /* ---------- Toggle completion ---------- */
   async function toggleTask(task) {
-    await fetch(`http://localhost:5000/tasks/${task._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed: !task.completed })
-    });
-    fetchTasks();
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/tasks/${task._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`
+          },
+          body: JSON.stringify({ completed: !task.completed })
+        }
+      );
+
+      if (res.ok) {
+        fetchTasks();
+      }
+    } catch (err) {
+      console.error("Error toggling task:", err);
+    }
   }
 
-  /* ---------- Edit task (THIS FIXES SAVE ISSUE) ---------- */
+  /* ---------- Edit task ---------- */
   async function editTask(taskId, updatedData) {
-    await fetch(`http://localhost:5000/tasks/${taskId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedData)
-    });
-    fetchTasks();
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/tasks/${taskId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`
+          },
+          body: JSON.stringify(updatedData)
+        }
+      );
+
+      if (res.ok) {
+        fetchTasks();
+      }
+    } catch (err) {
+      console.error("Error editing task:", err);
+    }
   }
 
   /* ---------- Delete task ---------- */
   async function deleteTask(taskId) {
-    await fetch(`http://localhost:5000/tasks/${taskId}`, {
-      method: "DELETE"
-    });
-    fetchTasks();
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/tasks/${taskId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${getToken()}`
+          }
+        }
+      );
+
+      if (res.ok) {
+        fetchTasks();
+      }
+    } catch (err) {
+      console.error("Error deleting task:", err);
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    setTasks([]);
+  }
+
+  /* ---------- If not logged in ---------- */
+  if (!isAuthenticated) {
+    return <AuthPage onAuthSuccess={() => setIsAuthenticated(true)} />;
   }
 
   /* ---------- Analytics ---------- */
@@ -84,7 +169,6 @@ function App() {
     t => !t.completed && (!t.dependency || t.dependency.completed)
   ).length;
 
-  /* ---------- Smart Next Task ---------- */
   const nextTask = tasks.find(
     t => !t.completed && (!t.dependency || t.dependency.completed)
   );
@@ -96,13 +180,16 @@ function App() {
   /* ---------- UI ---------- */
   return (
     <div className="app-wrapper">
-      <h1 className="title">Digital Task Dependency Manager</h1>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <h1 className="title">Digital Task Dependency Manager</h1>
+        <button onClick={handleLogout}>Logout</button>
+      </div>
+
       <p className="subtitle">
         Plan tasks intelligently with dependency-aware workflows
       </p>
 
       <div className="dashboard">
-        {/* LEFT PANEL */}
         <div className="task-column">
           <TaskForm onAdd={addTask} tasks={tasks} />
 
@@ -114,9 +201,7 @@ function App() {
           />
         </div>
 
-        {/* RIGHT PANEL */}
         <div className="insights-column">
-          {/* Analytics */}
           <div className="insights-card">
             <h3>Task Analytics</h3>
 
@@ -142,7 +227,6 @@ function App() {
             </div>
           </div>
 
-          {/* Next Task */}
           <div className="insights-card">
             <h3>Next task</h3>
 
@@ -179,32 +263,6 @@ function App() {
                   Unlocks {unlockedTasks.length} task
                   {unlockedTasks.length !== 1 && "s"}
                 </div>
-
-                {unlockedTasks.length > 0 && (
-                  <details style={{ marginTop: "8px" }}>
-                    <summary
-                      style={{
-                        fontSize: "13px",
-                        color: "#2563eb",
-                        cursor: "pointer"
-                      }}
-                    >
-                      View upcoming tasks
-                    </summary>
-
-                    <ul
-                      style={{
-                        marginTop: "6px",
-                        paddingLeft: "16px",
-                        fontSize: "13px"
-                      }}
-                    >
-                      {unlockedTasks.map(t => (
-                        <li key={t._id}>{t.title}</li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
               </div>
             ) : (
               <p style={{ fontSize: "14px", color: "#6b7280" }}>

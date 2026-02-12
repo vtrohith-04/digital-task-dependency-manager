@@ -4,11 +4,15 @@ function TaskForm({ onAdd, tasks }) {
   const [title, setTitle] = useState("");
   const [dependency, setDependency] = useState("");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+
     if (!title.trim()) return;
 
-    onAdd(title, dependency || null);
+    const finalDependency = dependency === "" ? null : dependency;
+
+    await onAdd(title.trim(), finalDependency);
+
     setTitle("");
     setDependency("");
   }
@@ -18,7 +22,7 @@ function TaskForm({ onAdd, tasks }) {
       onSubmit={handleSubmit}
       style={{
         display: "flex",
-        gap: "12px",
+        gap: "14px",
         alignItems: "center",
         marginBottom: "24px",
         flexWrap: "wrap"
@@ -30,10 +34,11 @@ function TaskForm({ onAdd, tasks }) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         style={{
-          padding: "10px",
-          minWidth: "220px",
-          borderRadius: "6px",
-          border: "1px solid #ccc"
+          padding: "12px",
+          minWidth: "280px",
+          borderRadius: "8px",
+          border: "1px solid #d1d5db",
+          fontSize: "14px"
         }}
       />
 
@@ -41,9 +46,10 @@ function TaskForm({ onAdd, tasks }) {
         value={dependency}
         onChange={(e) => setDependency(e.target.value)}
         style={{
-          padding: "10px",
-          borderRadius: "6px",
-          border: "1px solid #ccc"
+          padding: "12px",
+          borderRadius: "8px",
+          border: "1px solid #d1d5db",
+          fontSize: "14px"
         }}
       >
         <option value="">No Dependency</option>
@@ -57,12 +63,13 @@ function TaskForm({ onAdd, tasks }) {
       <button
         type="submit"
         style={{
-          padding: "10px 16px",
-          borderRadius: "6px",
+          padding: "12px 18px",
+          borderRadius: "8px",
           border: "none",
           backgroundColor: "#2c3e50",
           color: "#fff",
-          cursor: "pointer"
+          cursor: "pointer",
+          fontWeight: 500
         }}
       >
         Add Task

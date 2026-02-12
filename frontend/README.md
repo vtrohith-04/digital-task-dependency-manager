@@ -7,7 +7,7 @@ A full-stack MERN application that manages tasks with dependency-aware workflows
 - Backend: Node.js + Express
 - Database: MongoDB
 - State Management: React Hooks
-- API Testing: Postman
+- API Testing: Thunder Client 
 
 ## Features
 - Create tasks with dependencies
